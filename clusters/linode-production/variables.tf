@@ -11,7 +11,7 @@ variable "name" {
 
 # Digital Ocean cluster variables
 variable "linode_api_key" {
-    description = "Linode API key"
+    description = "Linode API keys"
     type        = string  
 }
 
