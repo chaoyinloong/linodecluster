@@ -1,0 +1,8 @@
+gitopsRepos: 
+%{ for repository in REPOSITORIES ~}
+  - name: ${repository.name}
+    repository: ${repository.repository}
+    label: %{ for label_key, label_value in repository.label }
+      ${label_key}: "${label_value}"
+%{ endfor ~}
+%{ endfor ~}

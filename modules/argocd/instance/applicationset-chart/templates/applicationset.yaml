@@ -1,0 +1,48 @@
+# Reference: https://argo-cd.readthedocs.io/en/stable/operator-manual/applicationset/Generators-Matrix/
+
+{{- range $repo := .Values.gitopsRepos }}
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: {{ $repo.name }}
+  namespace: argocd
+spec:
+  generators:
+    - matrix:
+        generators:
+          - git:
+              repoURL: {{ $repo.repository }}
+              revision: HEAD
+              directories:
+                - path: apps/**/*
+          - clusters:
+              selector:
+                matchLabels:
+                  {{ $repo.label | toYaml }}
+  template:
+    metadata:
+      name: '{{ printf "{{ path.basename }}" }}--{{ printf "{{ name }}" }}'
+    spec:
+      project: default
+      syncPolicy:
+        automated:
+          selfHeal: true
+          prune: true
+        syncOptions:
+        - CreateNamespace=true
+      source:
+        repoURL: {{ $repo.repository }}
+        targetRevision: HEAD
+        path: '{{ printf "{{ path }}" }}'
+        helm:
+          ignoreMissingValueFiles: true
+          releaseName: "{{ printf "{{ path.basename }}" }}"
+          valueFiles:
+          - "values.yaml"
+          - "../../../values/shared/{{ printf "{{ path.basename }}" }}/values.yaml"
+          - "../../../values/{{ printf "{{ name }}" }}/{{ printf "{{ path.basename }}" }}/values.yaml" # values/{cluster-name}/{app-name}/values.yaml
+      destination:
+        server: '{{ printf "{{ server }}" }}'
+        namespace: '{{ printf "{{ path[1] }}" }}'
+---
+{{- end }}
